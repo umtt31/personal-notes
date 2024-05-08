@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Note\StoreNoteRequest;
+use App\Http\Requests\Note\UpdateNoteRequest;
 use App\Models\Note;
 use Illuminate\Http\Request;
 
@@ -29,9 +31,14 @@ class NoteController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreNoteRequest $request)
     {
         //
+        $validated = $request->validated();
+        $validated['user_id'] = 1; // Change after Auth
+        $note = Note::create($validated);
+
+        return redirect()->route('note.show', $note->id)->with('message', 'Note was created');
     }
 
     /**
@@ -40,8 +47,8 @@ class NoteController extends Controller
     public function show(Note $note)
     {
         //
-        
-        return view('note.show', ['note'=> $note]);
+
+        return view('note.show', ['note' => $note]);
     }
 
     /**
@@ -49,16 +56,20 @@ class NoteController extends Controller
      */
     public function edit(Note $note)
     {
-        //  
-        return view('note.edit', ['note'=> $note]);
+        //
+        return view('note.edit', ['note' => $note]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Note $note)
+    public function update(UpdateNoteRequest $request, Note $note)
     {
         //
+        $validated = $request->validated();
+        $note->update($validated);
+
+        return redirect()->route('note.show', $note->id)->with('message', 'Note was updated');
     }
 
     /**
@@ -67,5 +78,8 @@ class NoteController extends Controller
     public function destroy(Note $note)
     {
         //
+        $note->delete();
+
+        return redirect()->route('note.index')->with('message', 'Note was deleted');
     }
 }
