@@ -6,6 +6,7 @@ use App\Http\Requests\Note\StoreNoteRequest;
 use App\Http\Requests\Note\UpdateNoteRequest;
 use App\Models\Note;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class NoteController extends Controller
 {
@@ -15,7 +16,7 @@ class NoteController extends Controller
     public function index()
     {
         //
-        $notes = Note::query()->latest()->paginate();
+        $notes = Note::query()->where('user_id', request()->user()->id)->latest()->paginate();
         return view('note.index', ['notes' => $notes]);
     }
 
@@ -35,7 +36,7 @@ class NoteController extends Controller
     {
         //
         $validated = $request->validated();
-        $validated['user_id'] = 1; // Change after Auth
+        $validated['user_id'] = auth()->user()->id;
         $note = Note::create($validated);
 
         return redirect()->route('note.show', $note->id)->with('message', 'Note was created');
@@ -47,7 +48,7 @@ class NoteController extends Controller
     public function show(Note $note)
     {
         //
-
+        Gate::authorize('viewAny', $note);
         return view('note.show', ['note' => $note]);
     }
 
@@ -57,6 +58,8 @@ class NoteController extends Controller
     public function edit(Note $note)
     {
         //
+        Gate::authorize('update', $note);
+
         return view('note.edit', ['note' => $note]);
     }
 
@@ -66,6 +69,8 @@ class NoteController extends Controller
     public function update(UpdateNoteRequest $request, Note $note)
     {
         //
+        Gate::authorize('update', $note);
+
         $validated = $request->validated();
         $note->update($validated);
 
@@ -78,6 +83,8 @@ class NoteController extends Controller
     public function destroy(Note $note)
     {
         //
+        Gate::authorize('delete', $note);
+
         $note->delete();
 
         return redirect()->route('note.index')->with('message', 'Note was deleted');
